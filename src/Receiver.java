@@ -30,12 +30,13 @@ public class Receiver {
                 }
 
                 DatagramPacket packet = new DatagramPacket(buf, buf.length);
-                socket.setSoTimeout(1000);
-                socket.receive(packet);
-                String received = new String(packet.getData(), 0, packet.getLength());
-                pack = packet.getSocketAddress();
+                try {
+                    socket.setSoTimeout(1000);
+                    socket.receive(packet);
+                } catch (SocketTimeoutException e) { }
 
-                if (!users.contains(pack)) {
+                pack = packet.getSocketAddress();
+                if (!users.contains(pack) && !pack.toString().equals("0.0.0.0/0.0.0.0:0")) {
                     users.add(pack);
                     Client cli = new Client(pack);
                     clients.add(cli);
@@ -48,11 +49,9 @@ public class Receiver {
                     }
                 }
 
-                //System.out.print("\033[H\033[2J");
-                //System.out.flush();
                 System.out.printf("\n\n\nOnline clients: (%d found)\n", clients.size());
             for (Client client : clients) {
-                System.out.println(client.getSock());
+                System.out.println(client.getSock().toString());
             }
         } catch (IOException e) {
             e.printStackTrace();
