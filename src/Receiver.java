@@ -33,10 +33,9 @@ public class Receiver {
                 try {
                     socket.setSoTimeout(1000);
                     socket.receive(packet);
-                } catch (SocketTimeoutException e) { }
 
                 pack = packet.getSocketAddress();
-                if (!users.contains(pack) && !pack.toString().equals("0.0.0.0/0.0.0.0:0")) {
+                if (!users.contains(pack)) {
                     users.add(pack);
                     Client cli = new Client(pack);
                     clients.add(cli);
@@ -48,6 +47,8 @@ public class Receiver {
                         }
                     }
                 }
+
+            } catch (SocketTimeoutException e) { }
 
                 System.out.printf("\n\n\nOnline clients: (%d found)\n", clients.size());
             for (Client client : clients) {
