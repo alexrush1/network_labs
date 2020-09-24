@@ -22,6 +22,8 @@ public class Main {
             receiver.stop();
             sender.stop();
         } catch (IOException e) {
+            receiver.stop();
+            sender.stop();
             e.printStackTrace();
         }
     }
