@@ -39,6 +39,7 @@ public class Client {
         out.close();
         in.close();
         sock.close();
+        out.flush();
     }
 
     public void sendFile() throws IOException {
