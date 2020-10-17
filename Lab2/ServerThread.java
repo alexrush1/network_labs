@@ -47,6 +47,8 @@ public class ServerThread implements Runnable {
 
     public void closeSocket() throws IOException {
         in.close();
+        out.flush();
+        out.close();
         sock.close();
     }
 
@@ -106,6 +108,7 @@ public class ServerThread implements Runnable {
             out.flush();
             out.close();
             in.close();
+            sock.close();
             } catch (IOException e) {
 
             }
