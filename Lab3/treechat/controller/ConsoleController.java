@@ -17,7 +17,7 @@ public class ConsoleController implements Runnable{
         String newMessage;
         while (true) {
             newMessage = in.nextLine();
-            if (newMessage.equals("stop")) {chat.stop(); break;}
+            if (newMessage.equals("stop")) {in.close(); chat.stop(); break;}
             chat.createBroadcastMessage(newMessage);
         }
         in.close();
