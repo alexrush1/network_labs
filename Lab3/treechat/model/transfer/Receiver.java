@@ -57,9 +57,6 @@ public class Receiver implements Runnable{
                         storages.deleteAckMessage(msg);
                     }
                 }
-            //} else if (message.getMessageType() == MessageType.WELCOME) {
-            //    System.out.printf("$NEW USER: %s connected!\n", message.getSenderName());
-            //    ackPrepare(packet.getSocketAddress(), message);
             } else if (message.getMessageType() == MessageType.NEWPARENT) {
                 storages.setNewParent(message.getNewParent());
                 ackPrepare(packet.getSocketAddress(), message);
