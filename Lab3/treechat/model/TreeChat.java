@@ -64,7 +64,7 @@ public class TreeChat {
         storages.setParent(remoteAddress);
         this.socket.connect(remoteAddress);
         storages.addNeighboor(remoteAddress);
-        createWelcomeBroadcastMessage();
+        //createWelcomeBroadcastMessage();
     }
 
     public void createBroadcastMessage(String messageData) {
@@ -74,12 +74,12 @@ public class TreeChat {
         });
     }
 
-    public void createWelcomeBroadcastMessage() {
-        storages.forNeighbors(neighbor->{
-            var newMessage = new Message(MessageType.WELCOME, senderName, neighbor, "");
-            storages.addMessageToSend(newMessage);
-        });
-    }
+    //public void createWelcomeBroadcastMessage() {
+    //    storages.forNeighbors(neighbor->{
+    //        var newMessage = new Message(MessageType.WELCOME, senderName, neighbor, "");
+    //        storages.addMessageToSend(newMessage);
+    //    });
+    //}
 
     public void createResendMessage(String messageData, String senderName, SocketAddress senderSocket) {
         storages.forNeighbors(neighbor->{
