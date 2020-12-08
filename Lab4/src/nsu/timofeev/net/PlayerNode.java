@@ -10,6 +10,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.net.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -20,6 +21,7 @@ public class PlayerNode {
     private Sender announcementSender;
     private DatagramSocket socket;
     public ArrayList<InetSocketAddress> users;
+    public HashMap<Integer, SnakesProto.NodeRole> roles;
 
     private int joinID = 2;
 
@@ -45,15 +47,17 @@ public class PlayerNode {
         this.port = port;
         this.id = 1;
         config = createGameConfig();
-        gameBoard = new GameBoard(config, name, nodeRole);
+        gameBoard = new GameBoard(config, name, nodeRole, this);
         nodeRole = SnakesProto.NodeRole.MASTER;
+        roles = new HashMap<>();
+        roles.put(id, nodeRole);
         users = new ArrayList<>();
     }
 
     public PlayerNode(String name) {
         this.name = name;
         config = createGameConfig();
-        gameBoard = new GameBoard(config, name, nodeRole);
+        gameBoard = new GameBoard(config, name, nodeRole, this);
         nodeRole = SnakesProto.NodeRole.NORMAL;
         users = new ArrayList<>();
     }
@@ -76,6 +80,11 @@ public class PlayerNode {
         this.users.add((InetSocketAddress) packet.getSocketAddress());
         socket.send(ackPacket);
         gameBoard.addNewPlayer(msg.getJoin().getName(), joinID, packet.getAddress(), packet.getPort());
+        if (joinID == 2) {
+            roles.put(joinID, SnakesProto.NodeRole.DEPUTY);
+        } else {
+            roles.put(joinID, SnakesProto.NodeRole.NORMAL);
+        }
         users.add(new InetSocketAddress(packet.getAddress(), packet.getPort()));
         System.out.println("SENDED!");
         joinID++;

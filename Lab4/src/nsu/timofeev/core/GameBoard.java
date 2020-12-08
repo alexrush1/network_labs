@@ -1,9 +1,11 @@
 package nsu.timofeev.core;
 
 import me.ippolitov.fit.snakes.SnakesProto;
+import nsu.timofeev.net.PlayerNode;
 
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.Socket;
 import java.util.*;
 
 public class GameBoard {
@@ -14,6 +16,7 @@ public class GameBoard {
     private SnakesProto.GamePlayers players;
     private Snake userSnake;
     private Updatable update;
+    private PlayerNode node;
     private DatagramSocket socket;  //only for steer sry :c
 
     int foodX;
@@ -46,7 +49,7 @@ public class GameBoard {
     public Snake getUserSnake() { return userSnake; }
     public SnakesProto.NodeRole getNodeRole() { return nodeRole; }
 
-    public GameBoard(SnakesProto.GameConfig config, String name, SnakesProto.NodeRole nodeRole) {
+    public GameBoard(SnakesProto.GameConfig config, String name, SnakesProto.NodeRole nodeRole, PlayerNode node) {
         this.config = config;
         SCREEN_WIDTH = config.getWidth();
         SCREEN_HEIGHT = config.getHeight();
@@ -55,6 +58,7 @@ public class GameBoard {
         deadFood = config.getDeadFoodProb();
         this.nodeRole = nodeRole;
         this.name = name;
+        this.node = node;
     }
 
     public void addUpdatable (Updatable update) {
@@ -173,9 +177,18 @@ public class GameBoard {
 
     public SnakesProto.GamePlayers convertArrayToProto() {
         var builder = SnakesProto.GamePlayers.newBuilder();
-        //for (var p: players) {
-        //    builder.addPlayers(p);
-        //}
+        if (snakes.size() == 1) return builder.build();
+        for (int i = 0; i < snakes.size(); i++) {
+            var playerBuilder = SnakesProto.GamePlayer.newBuilder();
+            playerBuilder.setName(snakes.get(i).name);
+            playerBuilder.setScore(snakes.get(i).score);
+            playerBuilder.setId(snakes.get(i).id);
+            playerBuilder.setIpAddress(snakes.get(i).ipAddress.getHostAddress());
+            playerBuilder.setPort(snakes.get(i).port);
+            playerBuilder.setRole(node.roles.get(snakes.get(i).id));
+            playerBuilder.build();
+            builder.addPlayers(playerBuilder);
+        }
         return builder.build();
     }
 
