@@ -82,12 +82,12 @@ public class PlayerNode {
     }
 
     public void startGame() throws IOException {
-        socket = new DatagramSocket();
+        socket = new DatagramSocket(port);
         MessageListener messageListener = new MessageListener(socket, gameBoard, this);
         Thread listener = new Thread(messageListener);
         listener.start();
         Sender sender = new Sender(this);
-        socket = new DatagramSocket(port);
+        //socket = new DatagramSocket(port);
 
         var timer2 = new Timer();
         var timerTask2 = new TimerTask() {
