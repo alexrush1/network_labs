@@ -16,6 +16,7 @@ public class MessageListener implements Runnable{
     private DatagramSocket socket;
     private GameBoard board;
     private PlayerNode node;
+    private long lastSeq = 0;
 
     public MessageListener(DatagramSocket socket, GameBoard board, PlayerNode node) throws IOException {
         this.socket = socket;
@@ -35,6 +36,8 @@ public class MessageListener implements Runnable{
             }
             try {
                 var msg = (SnakesProto.GameMessage) BytesConverter.getObject(packet.getData());
+                if (msg.getMsgSeq() < lastSeq) {continue;}
+                lastSeq = msg.getMsgSeq();
                 if (msg.hasJoin()) {
                     System.out.println(msg.getJoin().getName());
                     var ackMsg = SnakesProto.GameMessage.AckMsg.newBuilder().build();

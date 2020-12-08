@@ -38,23 +38,25 @@ public class SnakePanel extends JPanel implements ActionListener, Updatable {
         }
 
         for (var s : board.getSnakes()) {
-            g.setColor(new Color(150, 250, 70));
+            if (node.getID() == s.getId()) {
+                g.setColor(new Color(150, 250, 70));
+            } else {g.setColor(new Color(150, 50, 140));}
             var head = s.getSnakeComponents().get(0);
             g.fillRect(head.getX() * board.getUnitSize(), head.getY() * board.getUnitSize(), board.getUnitSize(), board.getUnitSize());
-            g.setColor(new Color(0, 150, 0));
+            if (node.getID() == s.getId()) {
+                g.setColor(new Color(0, 150, 0));
+            } else {g.setColor(new Color(100, 50, 140));}
             for (var c : s.getSnakeComponents()) {
-                if (c == head) {
-                    continue;
-                } else {
+                if (c != head) {
                     g.fillRect(c.getX() * board.getUnitSize(), c.getY() * board.getUnitSize(), board.getUnitSize(), board.getUnitSize());
                     //}
                 }
             }
 
-            g.setColor(Color.orange);
-            g.setFont(new Font("Comic Sans MS", Font.BOLD, 25));
-            FontMetrics metrics = getFontMetrics(g.getFont());
-            //g.drawString("Score: " + .score, 0, metrics.getHeight());
+            //g.setColor(Color.orange);
+            //g.setFont(new Font("Comic Sans MS", Font.BOLD, 25));
+            //FontMetrics metrics = getFontMetrics(g.getFont());
+            //g.drawString("Score: " + board.getSnakes()., 0, metrics.getHeight());
         }
     }
 

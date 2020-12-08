@@ -28,10 +28,12 @@ public class PlayerNode {
     private int port;
     private int id;
     public void setID(int id) {this.id = id;}
+    public int getID() {return id;}
 
     public PlayerNode(String name, int port) throws IOException {
         this.name = name;
         this.port = port;
+        this.id = 1;
         config = createGameConfig();
         gameBoard = new GameBoard(config, name, nodeRole);
         nodeRole = SnakesProto.NodeRole.MASTER;
@@ -48,7 +50,7 @@ public class PlayerNode {
     }
 
     private SnakesProto.GameConfig createGameConfig() {
-        return SnakesProto.GameConfig.newBuilder().setStateDelayMs(700).setDeadFoodProb(0.9f).build();
+        return SnakesProto.GameConfig.newBuilder().setStateDelayMs(100).setDeadFoodProb(0.9f).build();
     }
 
     public SnakesProto.GameState getGameState() {
@@ -60,15 +62,6 @@ public class PlayerNode {
         socket = new DatagramSocket(port);
         Thread listener = new Thread(new MessageListener(socket, gameBoard, this));
         listener.start();
-
-        var timer = new Timer();
-        var timerTask = new TimerTask() {
-            @Override
-            public void run() {
-                gameBoard.update();
-            }
-        };
-        timer.schedule(timerTask, 500, config.getStateDelayMs());
 
         var timer2 = new Timer();
         var timerTask2 = new TimerTask() {
@@ -88,6 +81,7 @@ public class PlayerNode {
             @Override
             public void run() {
                 try {
+                    gameBoard.update();
                     sendStateMsg();
                 } catch (IOException e) {
                     e.printStackTrace();

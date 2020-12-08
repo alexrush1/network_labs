@@ -78,7 +78,8 @@ public class GameBoard {
             for (var snake : snakes) {
                 if (snake.isFoodHere(s)) {
                     snake.setHasEaten(true);
-                    snake.getSnakeComponents().add(s);
+                    snake.getSnakeComponents().add(0, s);
+                    snake.score++;
                     foodIt.remove();
                 }
             }
@@ -107,6 +108,21 @@ public class GameBoard {
                 }
             }
         }
+        Iterator<Snake> j = snakes.iterator();
+        while (j.hasNext()) {
+            Snake s = j.next();
+            Vector head = s.getSnakeComponents().get(0);
+            for (var snake : getSnakes()) {
+                if (snake.equals(s)) {continue;}
+                for (var c: snake.getSnakeComponents()) {
+                    if (c.equals(head)){
+                        //System.out.println("died");
+                        createDeadFood(s);
+                        j.remove();
+                    }
+                }
+            }
+        }
     }
 
     public void startGame(SnakesProto.NodeRole nodeRole) {
@@ -116,6 +132,11 @@ public class GameBoard {
         vec2.add(new Vector(25,25));
         userSnake = new Snake(vec2, SCREEN_WIDTH, SCREEN_HEIGHT, 1, name, null, port);
         snakes.add(userSnake);
+    }
+
+    private Vector moduleVector(int x, int y) {
+        //System.out.println("newX = "+(x % screenWidth + screenWidth) % screenWidth+" newY= "+(y % screenHeight + screenHeight) % screenHeight);
+        return new Vector((x % SCREEN_WIDTH + SCREEN_WIDTH) % SCREEN_WIDTH, (y % SCREEN_HEIGHT + SCREEN_HEIGHT) % SCREEN_HEIGHT);
     }
 
     public void update() {
@@ -185,7 +206,7 @@ public class GameBoard {
     }
 
     public ArrayList<Vector> keyToVector(me.ippolitov.fit.snakes.SnakesProto.GameState.Snake snake) {
-        //System.out.println("START");
+        System.out.println("RECV");
         ArrayList<Vector> result = new ArrayList<>();
         var head = coordToVector(snake.getPointsList().get(0));
         result.add(head);
@@ -195,16 +216,16 @@ public class GameBoard {
             if (buf.getX() != 0) {
                 if (buf.getX() > 0) {sgn = 1;} else {sgn = -1;}
                 for (int j = 0; j < Math.abs(buf.getX()); j++) {
-                    var newV = new Vector(head.getX() + sgn, head.getY());
-                    //System.out.println("("+(head.getX() + (sgn * j))+"; "+head.getY()+")");
+                    var newV = moduleVector(head.getX() + sgn, head.getY());
+                    System.out.println("("+(head.getX() + sgn)+"; "+head.getY()+")");
                     result.add(newV);
                     head = newV;
                 }
             } else if (buf.getY() != 0) {
                 if (buf.getY() > 0) {sgn = 1;} else {sgn = -1;}
                 for (int j = 0; j < Math.abs(buf.getY()); j++) {
-                    var newV = new Vector(head.getX(), head.getY() + sgn);
-                    //System.out.println("("+head.getX()+"; "+(head.getY() + (sgn * j))+")");
+                    var newV = moduleVector(head.getX(), head.getY() + sgn);
+                    System.out.println("("+head.getX()+"; "+(head.getY() + sgn)+")");
                     result.add(newV);
                     head = newV;
                 }

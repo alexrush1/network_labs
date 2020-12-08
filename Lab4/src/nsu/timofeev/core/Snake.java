@@ -119,13 +119,21 @@ public class Snake {
         if (snakeComponents.size() == 1) { result.add(snakeComponents.get(0)); return result; }
         var head = snakeComponents.get(0);
         result.add(head);
-        if (snakeComponents.size() == 2) {  result.add(head.dotsCalc(snakeComponents.get(1))); }
+        if (snakeComponents.size() == 2) {
+            var second = head.dotsCalc(snakeComponents.get(1));
+            if (Math.abs(second.getX()) > 1) {second.setX(second.getX() % (screenWidth - 1));}
+            if (Math.abs(second.getY()) > 1) {second.setY(second.getY() % (screenHeight - 1));}
+            result.add(second);
+            return result;
+        }
 
         Vector currentMix;
         Vector previousMix = getVectorDirection();
         int count = 1;
         for (int i = 1; i < snakeComponents.size() - 1; i++) {
             currentMix = snakeComponents.get(i).dotsCalc(snakeComponents.get(i + 1));
+            if (Math.abs(currentMix.getX()) > 1) {currentMix.setX(currentMix.getX() % (screenWidth - 1));}
+            if (Math.abs(currentMix.getY()) > 1) {currentMix.setY(currentMix.getY() % (screenHeight - 1));}
             if (currentMix.equals(previousMix)) {
                 count++;
             } else {
@@ -164,8 +172,10 @@ public class Snake {
         builder.setPlayerId(id);
         builder.setState(state);
 
+        System.out.println("created snake id = "+id);
         for (var dot: getKeyComponents()) {
             builder.addPoints(dot.coord());
+            System.out.println("("+dot.getX()+"; "+dot.getY()+")");
         }
         builder.setHeadDirection(convertDirection());
 
