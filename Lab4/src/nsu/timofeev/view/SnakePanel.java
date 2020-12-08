@@ -14,15 +14,26 @@ public class SnakePanel extends JPanel implements ActionListener, Updatable {
 
     private PlayerNode node;
     private GameBoard board;
+    TextArea text;
 
-    SnakePanel(PlayerNode node) {
+    SnakePanel(PlayerNode node, TextArea text) {
+        this.text = text;
         this.node = node;
         board = node.getGameBoard();
-        this.setPreferredSize(new Dimension(node.getGameBoard().getWidth(), node.getGameBoard().getHeight()));
-        this.setBackground(Color.BLACK);
+        //this.setPreferredSize(new Dimension(node.getGameBoard().getWidth(), node.getGameBoard().getHeight()));
+        this.setBackground(Color.GRAY);
         this.setFocusable(true);
         this.addKeyListener(new KeyAction(node));
         node.getGameBoard().addUpdatable(this);
+    }
+
+    public void scoreWindow() {
+        text.setText("");
+        var gamePlayers = node.getGameBoard().getPlayers();
+        if (gamePlayers == null) return;
+        for (var player: gamePlayers.getPlayersList()) {
+            text.append(player.getId()+" "+player.getName()+" "+player.getScore()+"\n");
+        }
     }
 
     @Override
@@ -75,5 +86,6 @@ public class SnakePanel extends JPanel implements ActionListener, Updatable {
     @Override
     public void update() {
         repaint();
+        scoreWindow();
     }
 }

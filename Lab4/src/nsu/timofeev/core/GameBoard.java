@@ -46,6 +46,7 @@ public class GameBoard {
     public int getUnitSize() { return UNIT_SIZE; }
     public ArrayList<Vector> getFood() { return (ArrayList<Vector>) food.clone(); }
     public ArrayList<Snake> getSnakes() { return (ArrayList<Snake>) snakes.clone(); }
+    public SnakesProto.GamePlayers getPlayers() {return players;}
     public Snake getUserSnake() { return userSnake; }
     public SnakesProto.NodeRole getNodeRole() { return nodeRole; }
 
@@ -176,20 +177,23 @@ public class GameBoard {
     }
 
     public SnakesProto.GamePlayers convertArrayToProto() {
-        var builder = SnakesProto.GamePlayers.newBuilder();
-        if (snakes.size() == 1) return builder.build();
-        for (int i = 0; i < snakes.size(); i++) {
-            var playerBuilder = SnakesProto.GamePlayer.newBuilder();
-            playerBuilder.setName(snakes.get(i).name);
-            playerBuilder.setScore(snakes.get(i).score);
-            playerBuilder.setId(snakes.get(i).id);
-            playerBuilder.setIpAddress(snakes.get(i).ipAddress.getHostAddress());
-            playerBuilder.setPort(snakes.get(i).port);
-            playerBuilder.setRole(node.roles.get(snakes.get(i).id));
-            playerBuilder.build();
-            builder.addPlayers(playerBuilder);
-        }
-        return builder.build();
+            var builder = SnakesProto.GamePlayers.newBuilder();
+            try {
+                if (snakes.size() == 1) return builder.build();
+                for (int i = 0; i < snakes.size(); i++) {
+                    var playerBuilder = SnakesProto.GamePlayer.newBuilder();
+                    playerBuilder.setName(snakes.get(i).name);
+                    playerBuilder.setScore(snakes.get(i).score);
+                    playerBuilder.setId(snakes.get(i).id);
+                    playerBuilder.setIpAddress(snakes.get(i).ipAddress.getHostAddress());
+                    playerBuilder.setPort(snakes.get(i).port);
+                    playerBuilder.setRole(node.roles.get(snakes.get(i).id));
+                    playerBuilder.build();
+                    builder.addPlayers(playerBuilder);
+                }
+            } catch (NullPointerException e) {}
+            return builder.build();
+
     }
 
     public SnakesProto.GameState createGameState() {
