@@ -16,7 +16,7 @@ public class KeyAction extends KeyAdapter {
 
     @Override
     public void keyPressed(KeyEvent e) {
-        //System.out.println("ojkdaojsdiasoidija");
+        System.out.println("ojkdaojsdiasoidija");
         if (node.getGameBoard().getNodeRole() == SnakesProto.NodeRole.MASTER) {
             switch (e.getKeyCode()) {
                 case 87:

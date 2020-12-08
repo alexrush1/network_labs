@@ -206,7 +206,7 @@ public class GameBoard {
     }
 
     public ArrayList<Vector> keyToVector(me.ippolitov.fit.snakes.SnakesProto.GameState.Snake snake) {
-        System.out.println("RECV");
+        //System.out.println("RECV");
         ArrayList<Vector> result = new ArrayList<>();
         var head = coordToVector(snake.getPointsList().get(0));
         result.add(head);

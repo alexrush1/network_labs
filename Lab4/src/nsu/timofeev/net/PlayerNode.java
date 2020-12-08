@@ -4,7 +4,9 @@ import me.ippolitov.fit.snakes.SnakesProto;
 import nsu.timofeev.core.GameBoard;
 import nsu.timofeev.net.MulticastAnnouncment.Sender;
 import nsu.timofeev.util.BytesConverter;
+import nsu.timofeev.view.SnakeFrame;
 
+import java.awt.*;
 import java.io.IOException;
 import java.net.*;
 import java.util.ArrayList;
@@ -19,6 +21,8 @@ public class PlayerNode {
     private DatagramSocket socket;
     public ArrayList<InetSocketAddress> users;
 
+    private int joinID = 2;
+
     private GameBoard gameBoard;
     SnakesProto.GameConfig config;
     public GameBoard getGameBoard() { return gameBoard; }
@@ -30,7 +34,13 @@ public class PlayerNode {
     public void setID(int id) {this.id = id;}
     public int getID() {return id;}
 
-    public PlayerNode(String name, int port) throws IOException {
+    private String serverIp;
+    private int serverPort;
+
+    public void setIp(String serverIp) {this.serverIp = serverIp;}
+    public void setPort(int port) {this.serverPort = port;}
+
+    public PlayerNode(String name, int port) {
         this.name = name;
         this.port = port;
         this.id = 1;
@@ -40,13 +50,12 @@ public class PlayerNode {
         users = new ArrayList<>();
     }
 
-    public PlayerNode(String name, String ip, int port) {
+    public PlayerNode(String name) {
         this.name = name;
-        this.ip = ip;
-        this.port = port;
         config = createGameConfig();
         gameBoard = new GameBoard(config, name, nodeRole);
         nodeRole = SnakesProto.NodeRole.NORMAL;
+        users = new ArrayList<>();
     }
 
     private SnakesProto.GameConfig createGameConfig() {
@@ -57,11 +66,28 @@ public class PlayerNode {
         return gameBoard.createGameState();
     }
 
+    public void getAck(DatagramPacket packet) throws IOException, ClassNotFoundException {
+        var msg = (SnakesProto.GameMessage) BytesConverter.getObject(packet.getData());
+        System.out.println(msg.getJoin().getName());
+        var ackMsg = SnakesProto.GameMessage.AckMsg.newBuilder().build();
+        var ackFullMsg = SnakesProto.GameMessage.newBuilder().setMsgSeq(System.currentTimeMillis()).setAck(ackMsg).setReceiverId(joinID).build();
+        var buf = BytesConverter.getBytes(ackFullMsg);
+        DatagramPacket ackPacket = new DatagramPacket(buf, buf.length, packet.getAddress(), packet.getPort());
+        this.users.add((InetSocketAddress) packet.getSocketAddress());
+        socket.send(ackPacket);
+        gameBoard.addNewPlayer(msg.getJoin().getName(), joinID, packet.getAddress(), packet.getPort());
+        users.add(new InetSocketAddress(packet.getAddress(), packet.getPort()));
+        System.out.println("SENDED!");
+        joinID++;
+    }
+
     public void startGame() throws IOException {
-        Sender sender = new Sender();
-        socket = new DatagramSocket(port);
-        Thread listener = new Thread(new MessageListener(socket, gameBoard, this));
+        socket = new DatagramSocket();
+        MessageListener messageListener = new MessageListener(socket, gameBoard, this);
+        Thread listener = new Thread(messageListener);
         listener.start();
+        Sender sender = new Sender(this);
+        socket = new DatagramSocket(port);
 
         var timer2 = new Timer();
         var timerTask2 = new TimerTask() {
@@ -69,7 +95,8 @@ public class PlayerNode {
             public void run() {
                 try {
                     sender.send(createMCastMsg());
-                } catch (IOException e) {
+                    sender.recvJoin();
+                } catch (IOException | ClassNotFoundException e) {
                     e.printStackTrace();
                 }
             }
@@ -100,7 +127,7 @@ public class PlayerNode {
     public void changeClientDirection(SnakesProto.Direction dir) throws IOException {
         var msg = gameBoard.clientChangeDirection(dir, id);
         var buf = BytesConverter.getBytes(msg);
-        DatagramPacket packet = new DatagramPacket(buf, buf.length, InetAddress.getByName(ip), port);
+        DatagramPacket packet = new DatagramPacket(buf, buf.length, InetAddress.getByName(serverIp), serverPort);
         socket.send(packet);
     }
 
@@ -114,14 +141,26 @@ public class PlayerNode {
         }
     }
 
-    public void connectGame() throws IOException {
+    public void askConnect(String ip, int port) throws IOException {
+        System.out.println(ip+" "+port);
         socket = new DatagramSocket();
-        Thread listener = new Thread(new MessageListener(socket, gameBoard, this));
+        var msgL = new MessageListener(socket, gameBoard, this);
+        Thread listener = new Thread(msgL);
         listener.start();
         var joinMsg = SnakesProto.GameMessage.newBuilder().setJoin(createJoinMsg()).setMsgSeq(System.currentTimeMillis()).build();
         byte[] buf = BytesConverter.getBytes(joinMsg);
         DatagramPacket packet = new DatagramPacket(buf, buf.length, InetAddress.getByName(ip), port);
         socket.send(packet);
+        setIp(ip);
+        System.out.println("ip: "+ip);
+    }
+
+    public void connectGame() {
+        SnakeFrame frame = new SnakeFrame(this);
+        EventQueue.invokeLater(() -> {
+            frame.createWindow();
+            frame.setVisible(true);
+        });
 
         //Thread listener = new Thread(new MessageListener(socket));
         //listener
@@ -151,4 +190,5 @@ public class PlayerNode {
 
         return builder.build();
     }
+
 }

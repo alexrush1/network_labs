@@ -172,10 +172,10 @@ public class Snake {
         builder.setPlayerId(id);
         builder.setState(state);
 
-        System.out.println("created snake id = "+id);
+        //System.out.println("created snake id = "+id);
         for (var dot: getKeyComponents()) {
             builder.addPoints(dot.coord());
-            System.out.println("("+dot.getX()+"; "+dot.getY()+")");
+            //System.out.println("("+dot.getX()+"; "+dot.getY()+")");
         }
         builder.setHeadDirection(convertDirection());
 

@@ -10,7 +10,6 @@ import java.util.ArrayList;
 
 public class MessageListener implements Runnable{
 
-    private int joinID = 2;
     private int id;
     private int port;
     private DatagramSocket socket;
@@ -18,7 +17,7 @@ public class MessageListener implements Runnable{
     private PlayerNode node;
     private long lastSeq = 0;
 
-    public MessageListener(DatagramSocket socket, GameBoard board, PlayerNode node) throws IOException {
+    public MessageListener(DatagramSocket socket, GameBoard board, PlayerNode node) {
         this.socket = socket;
         this.board = board;
         this.node = node;
@@ -38,26 +37,20 @@ public class MessageListener implements Runnable{
                 var msg = (SnakesProto.GameMessage) BytesConverter.getObject(packet.getData());
                 if (msg.getMsgSeq() < lastSeq) {continue;}
                 lastSeq = msg.getMsgSeq();
-                if (msg.hasJoin()) {
-                    System.out.println(msg.getJoin().getName());
-                    var ackMsg = SnakesProto.GameMessage.AckMsg.newBuilder().build();
-                    var ackFullMsg = SnakesProto.GameMessage.newBuilder().setMsgSeq(System.currentTimeMillis()).setAck(ackMsg).setReceiverId(joinID).build();
-                    var buf = BytesConverter.getBytes(ackFullMsg);
-                    DatagramPacket ackPacket = new DatagramPacket(buf, buf.length, packet.getAddress(), packet.getPort());
-                    node.users.add((InetSocketAddress) packet.getSocketAddress());
-                    socket.send(ackPacket);
-                    board.addNewPlayer(msg.getJoin().getName(), joinID, packet.getAddress(), packet.getPort());
-                    System.out.println("SENDED!");
-                    joinID++;
-                } else if (msg.hasAck()) {
+                if  (msg.hasAck()) {
                     id = msg.getReceiverId();
                     node.setID(id);
+                    //node.users.add(new InetSocketAddress(packet.getAddress(), packet.getPort()));
+                    node.setPort(packet.getPort());
+                    System.out.println("port: "+packet.getPort());
+                    node.connectGame();
                     System.out.println("ACK!!!");
                 } else if (msg.hasState()) {
                     //System.out.println("recv state");
                     board.applyGameState(msg.getState().getState());
                     //update.update();
                 } else if (msg.hasSteer()) {
+                    System.out.println("changed");
                     board.changeDirection(msg.getSteer().getDirection(), msg.getSenderId());
                 }
             } catch (IOException e) {
