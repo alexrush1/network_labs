@@ -18,6 +18,8 @@ public class Server {
                 newClient.connect();
                 if(newClient.isConnected()) {
                     clientsArray.add(newClient);
+                } else {
+                    newClient.disconnect();
                 }
             } catch (Exception e) {
             }

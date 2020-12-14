@@ -17,6 +17,8 @@ public class Client {
     private OutputStream remoteOut;
 
     private boolean connected;
+    private ConnectionType.type type;
+    private ConnectionType.mode mode;
 
     public boolean isConnected() {
         return connected;
@@ -38,9 +40,40 @@ public class Client {
         out.write(packet.createAnswer());
 
         readBytes = in.read(bytes);
+        if (bytes[1] == 1) {
+            type = ConnectionType.type.TCPCONNECTING;
+        } else if (bytes[1] == 3) {
+            type = ConnectionType.type.UDPBINDING;
+        } else {
+            type = ConnectionType.type.TCPBINDING;
+        }
+
+        if (bytes[3] == 1) {
+            mode = ConnectionType.mode.IPV4;
+        } else if (bytes[3] == 3) {
+            mode = ConnectionType.mode.HOSTNAME;
+        } else {
+            mode = ConnectionType.mode.IPV6;
+        }
 
         //checking for non establish a TCP/IP stream request
-        if (bytes[1] != 1) {
+        if (type == ConnectionType.type.TCPBINDING) {
+            byte[] ansBytes = new byte[10];
+            ansBytes[0] = bytes[0];
+            ansBytes[1] = 0;
+            ansBytes[2] = 7;
+            ansBytes[3] = 1;
+            ansBytes[4] = 127;
+            ansBytes[5] = 0;
+            ansBytes[6] = 0;
+            ansBytes[7] = 1;
+            ansBytes[8] = (byte) 5000 / 256;
+            ansBytes[9] = (byte) (5000 % 256);
+            out.write(ansBytes);
+            connected = false;
+            return;
+        }
+        if (type == ConnectionType.type.UDPBINDING) {
             byte[] ansBytes = new byte[10];
             ansBytes[0] = bytes[0];
             ansBytes[1] = 0;
@@ -57,7 +90,7 @@ public class Client {
             return;
         }
         //checking for ipv6 address
-        if (bytes[3] != 1) {
+        if (mode == ConnectionType.mode.IPV6) {
             byte[] ansBytes = new byte[10];
             ansBytes[0] = bytes[0];
             ansBytes[1] = 0;
@@ -73,37 +106,43 @@ public class Client {
             connected = false;
             return;
         }
-        //System.out.println("third byte = " + bytes[3]);
-        byte[] remoteAddress = {bytes[4], bytes[5], bytes[6], bytes[7]};
-        byte[] ansBytes = new byte[10];
-        ansBytes[0] = bytes[0];
-        ansBytes[1] = 0;
-        ansBytes[2] = 0;
-        ansBytes[3] = 1;
-        ansBytes[4] = 127;
-        ansBytes[5] = 0;
-        ansBytes[6] = 0;
-        ansBytes[7] = 1;
-        ansBytes[8] = (byte) 5000 / 256;
-        ansBytes[9] = (byte) (5000 % 256);
-        out.write(ansBytes);
-        //System.out.println("answer sended!");
+        InetAddress target;
+        if (mode == ConnectionType.mode.IPV4) {
+            byte[] remoteAddress = {bytes[4], bytes[5], bytes[6], bytes[7]};
+            target = InetAddress.getByAddress(remoteAddress);
+        } else if (mode == ConnectionType.mode.HOSTNAME) {
+            byte[] buf = new byte[readBytes - 6];
+            for(int i = 0; i < buf.length; i++) {
+               buf[i] = bytes[i + 4];
+            }
+            target = InetAddress.getByName(new String(buf));
+        } else {
+            return;
+        }
+            byte[] ansBytes = new byte[10];
+            ansBytes[0] = bytes[0];
+            ansBytes[1] = 0;
+            ansBytes[2] = 0;
+            ansBytes[3] = 1;
+            ansBytes[4] = 127;
+            ansBytes[5] = 0;
+            ansBytes[6] = 0;
+            ansBytes[7] = 1;
+            ansBytes[8] = (byte) 5000 / 256;
+            ansBytes[9] = (byte) (5000 % 256);
+            out.write(ansBytes);
 
-        //System.out.print("address = " + InetAddress.getByAddress(remoteAddress) + " port = " + ((int) (bytes[8] & 0xFF) * 256 + (int) (bytes[9] & 0xFF)) + " connecting...");
-        var remoteSocket = new Socket(InetAddress.getByAddress(remoteAddress), ((int) (bytes[8] & 0xFF) * 256 + (int) (bytes[9] & 0xFF)));
-        //System.out.println("DONE!");
-        remoteIn = remoteSocket.getInputStream();
-        remoteOut = remoteSocket.getOutputStream();
+            var remoteSocket = new Socket(target, ((int) (bytes[8] & 0xFF) * 256 + (int) (bytes[9] & 0xFF)));
+            remoteIn = remoteSocket.getInputStream();
+            remoteOut = remoteSocket.getOutputStream();
 
-        connected = true;
+            connected = true;
     }
 
     public void process() throws IOException {
         if (in.available() > 0) {
             byte[] bytes4 = new byte[2048];
-            //System.out.println("cli -> remote ...");
             int readBytes = in.read(bytes4);
-            //System.out.println("cli -> remote done!");
             byte[] bytes2 = new byte[readBytes];
             for (int i = 0; i < readBytes; i++) {
                 bytes2[i] = bytes4[i];
@@ -112,9 +151,7 @@ public class Client {
         }
         if (remoteIn.available() > 0) {
             byte[] bytes5 = new byte[2048];
-            //System.out.println("remote -> cli ...");
             int readBytes = remoteIn.read(bytes5);
-            //System.out.println("remote -> cli done!");
             byte[] bytes3 = new byte[readBytes];
             for (int i = 0; i < readBytes; i++) {
                 bytes3[i] = bytes5[i];

@@ -12,13 +12,13 @@ public class WelcomePacket {
         }
         version = msg[0];
         authMethodsNum = msg[1];
-        //System.out.println(authMethodsNum);
         authMethods = new byte[authMethodsNum];
         for (int i = 2; i < authMethodsNum + 2; i++) {
             authMethods[i-2] = msg[i];
         }
     }
 
+    //for debug only
     public void print() {
         System.out.println("\nHello! version: "+version+" methodsNum: "+authMethodsNum);
         for (int i = 0; i < authMethodsNum; i++) {
@@ -27,13 +27,15 @@ public class WelcomePacket {
     }
 
     public byte[] createAnswer() {
+        if (authMethods[0] != 0) {
+            return createAnswerToUnauthUser();
+        }
         if (version == 4) {
             return createAnswerToSocks4();
         } else {
             var ansAck = new byte[2];
             ansAck[0] = version;
             ansAck[1] = authMethods[0];
-            //System.out.println(ansAck);
             return ansAck;
         }
     }
@@ -48,6 +50,13 @@ public class WelcomePacket {
         ansAck[5] = 0;
         ansAck[6] = 0;
         ansAck[7] = 0;
+        return ansAck;
+    }
+
+    public byte[] createAnswerToUnauthUser() {
+        var ansAck = new byte[2];
+        ansAck[0] = version;
+        ansAck[1] = (byte)0xFF;
         return ansAck;
     }
 }
