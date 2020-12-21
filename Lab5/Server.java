@@ -3,15 +3,23 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Scanner;
 
 public class Server {
 
     private static ArrayList<Client> clientsArray = new ArrayList<>();
 
+    ServerSocket socket;
+
     public void run(int port) throws IOException {
-        ServerSocket socket = new ServerSocket(port);
+        Scanner scanner = new Scanner(System.in);
+        socket = new ServerSocket(port);
         socket.setSoTimeout(1);
         while (true) {
+            if(System.in.available() != 0) {
+                String s = scanner.nextLine();
+                if(s.equals("stop")) break;
+            }
             try {
                 Socket client = socket.accept();
                 var newClient = new Client(client);
@@ -36,6 +44,16 @@ public class Server {
                 }
             }
         }
+        stop();
+    }
 
+    private void stop() throws IOException {
+        try {
+            for (var c: clientsArray) {
+                c.disconnect();
+            }
+            socket.close();
+            System.out.println("Proxy stopped");
+        } catch (Exception e) {}
     }
 }
